@@ -1,0 +1,925 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Udhana DC Report Generator</title>
+    
+    <!-- PWA Meta Tags & Manifest -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Udhana DC Report">
+    <meta name="theme-color" content="#059669">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/059669/ffffff?text=UDC">
+    <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Udhana%20DC%20Report%20Generator%22%2C%22short_name%22%3A%22Udhana%20DC%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f172a%22%2C%22theme_color%22%3A%22%23059669%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fplacehold.co%2F192x192%2F059669%2Fffffff%3Ftext%3DUDC%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen pb-24">
+
+    <!-- Global Datalists for Auto-Suggestions -->
+    <datalist id="savedDcNames"></datalist>
+    <datalist id="savedVehicleNos"></datalist>
+
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-md">
+        <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-600 text-white p-2.5 rounded-xl shadow-lg">
+                    <i class="fa-solid fa-truck-fast text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white">Udhana DC Report</h1>
+                    <p class="text-xs text-slate-400">Daily Vehicle Management & TAT Summary</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="openResetModal()" title="Reset for New Day" class="bg-slate-700 hover:bg-rose-600 text-slate-300 hover:text-white px-3 py-2 rounded-lg text-xs font-medium transition duration-200 flex items-center space-x-1">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span class="hidden sm:inline">Reset</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 py-6 space-y-6">
+
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 text-sm font-medium">
+            <i class="fa-solid fa-circle-check text-lg" id="toast-icon"></i>
+            <span id="toast-msg">Action completed!</span>
+        </div>
+
+        <!-- Reset Modal -->
+        <div id="resetModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+                <div class="flex items-center space-x-3 text-rose-400">
+                    <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                    <h3 class="text-base font-bold text-white">Reset for New Day?</h3>
+                </div>
+                <p class="text-xs text-slate-300">This will clear current vehicle entries and reset metrics for a fresh report in local storage.</p>
+                <div class="flex space-x-3 pt-2">
+                    <button onclick="closeResetModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2.5 rounded-xl text-xs font-semibold transition">Cancel</button>
+                    <button onclick="confirmResetForNewDay()" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white py-2.5 rounded-xl text-xs font-semibold transition">Yes, Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Navigation Bar -->
+        <section class="bg-slate-800/90 border border-slate-700 rounded-2xl p-4 shadow-xl flex items-center justify-between">
+            <button onclick="navigateHistory(-1)" class="bg-slate-700 hover:bg-emerald-700 text-slate-200 hover:text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-chevron-left"></i>
+                <span>Prev Date</span>
+            </button>
+            <div class="text-center">
+                <span class="text-[10px] uppercase tracking-wider text-emerald-400 font-bold block">Active Report Date</span>
+                <span id="activeDateDisplay" class="text-sm font-mono font-bold text-white">--/--/----</span>
+            </div>
+            <button id="nextDateBtn" onclick="navigateHistory(1)" class="bg-slate-700 hover:bg-emerald-700 text-slate-200 hover:text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                <span>Next Date</span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </section>
+
+        <!-- Hub & Date Settings -->
+        <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h2 class="text-sm font-semibold text-emerald-400 uppercase tracking-wider">
+                    <i class="fa-solid fa-building mr-1.5"></i> Hub & Date Settings
+                </h2>
+                <span class="text-xs bg-slate-700 px-2.5 py-1 rounded-full text-slate-300 font-mono">Auto-saved</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Hub Name</label>
+                    <input type="text" id="hubName" oninput="updateHubSettings()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Hub Code</label>
+                    <input type="text" id="hubCode" oninput="updateHubSettings()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Report Date (DD/MM/YYYY)</label>
+                    <div class="relative flex items-center">
+                        <input type="text" id="reportDate" placeholder="DD/MM/YYYY" onchange="onReportDateChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-3 pr-10 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono">
+                        <button type="button" onclick="openNativeCalendar()" class="absolute right-2.5 text-emerald-400 hover:text-emerald-300 p-1" title="Open Calendar Picker">
+                            <i class="fa-solid fa-calendar-days text-base"></i>
+                        </button>
+                        <input type="date" id="nativeDateInput" class="absolute opacity-0 pointer-events-none w-0 h-0" onchange="onNativeDateSelected(this.value)">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Daily Summary Metrics -->
+        <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h2 class="text-sm font-semibold text-emerald-400 uppercase tracking-wider">
+                    <i class="fa-solid fa-chart-pie mr-1.5"></i> Daily Summary Metrics
+                </h2>
+                <span class="text-xs text-slate-400">Numeric Format</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">No of DC vehicle Today (Numeric)</label>
+                    <div class="relative">
+                        <input type="number" id="summaryTotal" oninput="updateSummaryMetrics()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-bold">
+                        <button onclick="autoCalcVehicles()" type="button" title="Sync with vehicle list count" class="absolute right-2 top-2 bg-slate-700 hover:bg-emerald-700 text-slate-300 hover:text-white px-2.5 py-1 rounded-lg text-xs transition">
+                            <i class="fa-solid fa-sync mr-1"></i> Sync
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">No of DC vehicle unloaded</label>
+                    <input type="text" id="summaryUnloaded" placeholder="e.g. 04 and 1 running" oninput="updateSummaryMetrics()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">No of Pending vehicle today (Numeric)</label>
+                    <input type="number" id="summaryPending" placeholder="01" oninput="updateSummaryMetrics()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">No of pending vehicle > 24hr (Numeric)</label>
+                    <input type="number" id="summaryMoreThan24" placeholder="00" oninput="updateSummaryMetrics()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-medium">
+                </div>
+            </div>
+        </section>
+
+        <!-- Vehicle Entries Section -->
+        <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h2 class="text-sm font-semibold text-emerald-400 uppercase tracking-wider">
+                    <i class="fa-solid fa-truck-ramp-box mr-1.5"></i> Vehicle Entries (<span id="vehicleCountBadge">0</span>)
+                </h2>
+                <button onclick="addVehicleEntry()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold shadow-md transition duration-200 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add Vehicle</span>
+                </button>
+            </div>
+
+            <div id="vehicleListContainer" class="space-y-4">
+                <!-- Vehicle cards rendered dynamically -->
+            </div>
+
+            <div class="text-center pt-2">
+                <button onclick="addVehicleEntry()" class="w-full py-3 border-2 border-dashed border-slate-700 hover:border-emerald-500 rounded-xl text-slate-400 hover:text-emerald-400 text-sm font-medium transition duration-200 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-circle-plus"></i>
+                    <span>Add Another Vehicle Entry</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- WhatsApp Preview Section 1: Detailed Report -->
+        <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-brands fa-whatsapp text-emerald-400 text-lg"></i>
+                    <h2 class="text-sm font-semibold text-emerald-400 uppercase tracking-wider">Report 1: Detailed Vehicle Data</h2>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="copyReport(1)" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-lg transition flex items-center space-x-1">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>Copy</span>
+                    </button>
+                    <button onclick="shareWhatsApp(1)" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-lg transition flex items-center space-x-1">
+                        <i class="fa-brands fa-whatsapp"></i>
+                        <span>Share</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs text-slate-300 whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto shadow-inner" id="whatsappPreviewBox1">
+                Loading preview...
+            </div>
+        </section>
+
+        <!-- WhatsApp Preview Section 2: TAT Summary -->
+        <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-brands fa-whatsapp text-emerald-400 text-lg"></i>
+                    <h2 class="text-sm font-semibold text-emerald-400 uppercase tracking-wider">Report 2: TAT Summary</h2>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="copyReport(2)" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-lg transition flex items-center space-x-1">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>Copy</span>
+                    </button>
+                    <button onclick="shareWhatsApp(2)" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-lg transition flex items-center space-x-1">
+                        <i class="fa-brands fa-whatsapp"></i>
+                        <span>Share</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs text-slate-300 whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto shadow-inner" id="whatsappPreviewBox2">
+                Loading preview...
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        let historyStore = {};
+        let activeDateKey = "";
+
+        let state = {
+            hubName: "Udhana",
+            hubCode: "UDHANA 3939",
+            reportDate: "",
+            summaryTotal: "01",
+            summaryUnloaded: "0",
+            summaryPending: "0",
+            summaryMoreThan24: "0",
+            vehicles: [
+                {
+                    dcName: "",
+                    vehicleNo: "",
+                    reportingTime: "",
+                    startTime: "",
+                    endTime: "",
+                    box: "",
+                    ton: "",
+                    loader: "",
+                    staff: "",
+                    collapsed: false
+                }
+            ]
+        };
+
+        function getFormattedToday() {
+            const d = new Date();
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        window.onload = function() {
+            loadAllHistory();
+            const today = getFormattedToday();
+            if (!historyStore[today]) {
+                state.reportDate = today;
+                historyStore[today] = JSON.parse(JSON.stringify(state));
+            }
+            activeDateKey = today;
+            switchDate(activeDateKey);
+        };
+
+        function loadAllHistory() {
+            const saved = localStorage.getItem('udhana_dc_report_history_db');
+            if (saved) {
+                try {
+                    historyStore = JSON.parse(saved);
+                } catch(e) {
+                    console.error("Error parsing history", e);
+                    historyStore = {};
+                }
+            }
+        }
+
+        function saveAllHistory() {
+            localStorage.setItem('udhana_dc_report_history_db', JSON.stringify(historyStore));
+            updateAutocompleteSuggestions();
+        }
+
+        function updateAutocompleteSuggestions() {
+            const dcSet = new Set();
+            const vehSet = new Set();
+
+            for (let dateKey in historyStore) {
+                const report = historyStore[dateKey];
+                if (report && Array.isArray(report.vehicles)) {
+                    report.vehicles.forEach(v => {
+                        if (v.dcName && v.dcName.trim() !== "") {
+                            dcSet.add(v.dcName.trim().toUpperCase());
+                        }
+                        if (v.vehicleNo && v.vehicleNo.trim() !== "") {
+                            vehSet.add(v.vehicleNo.trim().toUpperCase());
+                        }
+                    });
+                }
+            }
+
+            const dcListEl = document.getElementById('savedDcNames');
+            const vehListEl = document.getElementById('savedVehicleNos');
+
+            let dcOptions = '';
+            dcSet.forEach(name => {
+                dcOptions += `<option value="${escapeHtml(name)}">`;
+            });
+            dcListEl.innerHTML = dcOptions;
+
+            let vehOptions = '';
+            vehSet.forEach(no => {
+                vehOptions += `<option value="${escapeHtml(no)}">`;
+            });
+            vehListEl.innerHTML = vehOptions;
+        }
+
+        function updateHubSettings() {
+            state.hubName = document.getElementById('hubName').value;
+            state.hubCode = document.getElementById('hubCode').value;
+            persistState();
+        }
+
+        function updateSummaryMetrics() {
+            state.summaryTotal = document.getElementById('summaryTotal').value;
+            state.summaryUnloaded = document.getElementById('summaryUnloaded').value;
+            state.summaryPending = document.getElementById('summaryPending').value;
+            state.summaryMoreThan24 = document.getElementById('summaryMoreThan24').value;
+            persistState();
+        }
+
+        function persistState() {
+            activeDateKey = state.reportDate || activeDateKey;
+            historyStore[activeDateKey] = JSON.parse(JSON.stringify(state));
+            saveAllHistory();
+            updatePreview();
+        }
+
+        function updateVehicleField(index, field, value) {
+            if (!state.vehicles[index]) return;
+
+            // Check duplicate vehicle number for the same active date
+            if (field === 'vehicleNo') {
+                const cleanVal = value.trim().toUpperCase();
+                if (cleanVal !== "") {
+                    for (let i = 0; i < state.vehicles.length; i++) {
+                        if (i !== index && state.vehicles[i].vehicleNo && state.vehicles[i].vehicleNo.trim().toUpperCase() === cleanVal) {
+                            showToast(`⚠️ Vehicle number "${cleanVal}" already exists in this date's report!`, true);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            state.vehicles[index][field] = value;
+
+            // Mutually exclusive box/ton handling
+            if (field === 'box' && value !== "") {
+                state.vehicles[index].ton = "";
+                const tonInput = document.querySelector(`.vehicle-card[data-index="${index}"] .input-ton`);
+                if (tonInput) {
+                    tonInput.value = "";
+                    tonInput.disabled = true;
+                }
+            } else if (field === 'box' && value === "") {
+                const tonInput = document.querySelector(`.vehicle-card[data-index="${index}"] .input-ton`);
+                if (tonInput) tonInput.disabled = false;
+            }
+
+            if (field === 'ton' && value !== "") {
+                state.vehicles[index].box = "";
+                const boxInput = document.querySelector(`.vehicle-card[data-index="${index}"] .input-box`);
+                if (boxInput) {
+                    boxInput.value = "";
+                    boxInput.disabled = true;
+                }
+            } else if (field === 'ton' && value === "") {
+                const boxInput = document.querySelector(`.vehicle-card[data-index="${index}"] .input-box`);
+                if (boxInput) boxInput.disabled = false;
+            }
+
+            persistState();
+        }
+
+        function toggleCollapse(index) {
+            if (!state.vehicles[index]) return;
+            state.vehicles[index].collapsed = !state.vehicles[index].collapsed;
+            persistState();
+            renderVehicleList();
+        }
+
+        function validateTimeInput(index, field, e) {
+            let val = e.target.value.replace(/\D/g, '');
+            if (val.length > 4) val = val.slice(0, 4);
+            if (val.length >= 3) {
+                val = val.slice(0, 2) + ':' + val.slice(2);
+            }
+            e.target.value = val;
+
+            const errorEl = e.target.parentElement.querySelector('.time-error');
+            if (val.length === 5) {
+                const [hours, minutes] = val.split(':').map(Number);
+                if (hours > 23 || minutes > 59) {
+                    errorEl.classList.remove('hidden');
+                } else {
+                    errorEl.classList.add('hidden');
+                }
+            } else {
+                errorEl.classList.add('hidden');
+            }
+
+            updateVehicleField(index, field, val);
+        }
+
+        function switchDate(dateKey) {
+            if (historyStore[dateKey]) {
+                state = JSON.parse(JSON.stringify(historyStore[dateKey]));
+            } else {
+                state = {
+                    hubName: "Udhana",
+                    hubCode: "UDHANA 3939",
+                    reportDate: dateKey,
+                    summaryTotal: "0",
+                    summaryUnloaded: "0",
+                    summaryPending: "0",
+                    summaryMoreThan24: "0",
+                    vehicles: []
+                };
+                historyStore[dateKey] = JSON.parse(JSON.stringify(state));
+            }
+            activeDateKey = dateKey;
+            renderApp();
+        }
+
+        function onReportDateChange() {
+            const newDate = document.getElementById('reportDate').value.trim();
+            if (newDate) {
+                state.reportDate = newDate;
+                switchDate(newDate);
+            }
+        }
+
+        function openNativeCalendar() {
+            const nativeInput = document.getElementById('nativeDateInput');
+            const parts = (state.reportDate || getFormattedToday()).split('/');
+            if (parts.length === 3) {
+                nativeInput.value = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            if (typeof nativeInput.showPicker === 'function') {
+                try {
+                    nativeInput.showPicker();
+                } catch (err) {
+                    nativeInput.click();
+                }
+            } else {
+                nativeInput.click();
+            }
+        }
+
+        function onNativeDateSelected(isoDate) {
+            if (!isoDate) return;
+            const [year, month, day] = isoDate.split('-');
+            const formatted = `${day}/${month}/${year}`;
+            state.reportDate = formatted;
+            document.getElementById('reportDate').value = formatted;
+            switchDate(formatted);
+        }
+
+        function parseDateKey(str) {
+            const parts = str.split('/');
+            if (parts.length === 3) {
+                return new Date(parts[2], parts[1] - 1, parts[0]);
+            }
+            return new Date(0);
+        }
+
+        function formatDateKey(d) {
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function navigateHistory(direction) {
+            const keys = Object.keys(historyStore).sort((a, b) => parseDateKey(a) - parseDateKey(b));
+            let currentIndex = keys.indexOf(activeDateKey);
+            
+            if (direction === -1) {
+                if (currentIndex > 0) {
+                    switchDate(keys[currentIndex - 1]);
+                } else {
+                    const currentDateObj = parseDateKey(activeDateKey);
+                    currentDateObj.setDate(currentDateObj.getDate() - 1);
+                    const prevKey = formatDateKey(currentDateObj);
+                    switchDate(prevKey);
+                }
+            } else if (direction === 1) {
+                const todayStr = getFormattedToday();
+                if (activeDateKey === todayStr) {
+                    showToast("Cannot navigate to future dates beyond today!");
+                    return;
+                }
+                if (currentIndex >= 0 && currentIndex < keys.length - 1) {
+                    switchDate(keys[currentIndex + 1]);
+                } else {
+                    const currentDateObj = parseDateKey(activeDateKey);
+                    currentDateObj.setDate(currentDateObj.getDate() + 1);
+                    const nextKey = formatDateKey(currentDateObj);
+                    if (parseDateKey(nextKey) <= new Date()) {
+                        switchDate(nextKey);
+                    } else {
+                        showToast("Cannot advance into future dates!");
+                    }
+                }
+            }
+        }
+
+        function renderApp() {
+            document.getElementById('hubName').value = state.hubName || "Udhana";
+            document.getElementById('hubCode').value = state.hubCode || "UDHANA 3939";
+            document.getElementById('reportDate').value = state.reportDate || activeDateKey;
+            document.getElementById('activeDateDisplay').innerText = state.reportDate || activeDateKey;
+            document.getElementById('summaryTotal').value = state.summaryTotal || "0";
+            document.getElementById('summaryUnloaded').value = state.summaryUnloaded || "";
+            document.getElementById('summaryPending').value = state.summaryPending || "";
+            document.getElementById('summaryMoreThan24').value = state.summaryMoreThan24 || "";
+
+            const todayStr = getFormattedToday();
+            const nextBtn = document.getElementById('nextDateBtn');
+            if (activeDateKey === todayStr) {
+                nextBtn.disabled = true;
+            } else {
+                nextBtn.disabled = false;
+            }
+
+            updateAutocompleteSuggestions();
+            renderVehicleList();
+            updatePreview();
+        }
+
+        function renderVehicleList() {
+            const container = document.getElementById('vehicleListContainer');
+            document.getElementById('vehicleCountBadge').innerText = state.vehicles.length;
+            
+            if (state.vehicles.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-500 text-sm">
+                        <i class="fa-solid fa-box-open text-3xl mb-2 block"></i>
+                        No vehicle entries added yet. Click "Add Vehicle" to begin.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            state.vehicles.forEach((v, i) => {
+                const hasBox = v.box !== undefined && v.box !== null && v.box !== "";
+                const hasTon = v.ton !== undefined && v.ton !== null && v.ton !== "";
+                const isCollapsed = !!v.collapsed;
+
+                if (isCollapsed) {
+                    const summaryLabel = (v.dcName || v.vehicleNo) ? `${v.dcName ? v.dcName.toUpperCase() : 'DC'} | ${v.vehicleNo ? v.vehicleNo.toUpperCase() : 'NO VEHICLE'}` : `Vehicle #${i + 1} (Empty)`;
+                    const qtyLabel = hasBox ? `Box: ${v.box}` : (hasTon ? `Ton: ${v.ton}` : `Qty: 0`);
+                    
+                    html += `
+                        <div class="vehicle-card bg-slate-900 border border-slate-700/80 rounded-2xl p-3 shadow-md flex items-center justify-between" data-index="${i}">
+                            <div class="flex items-center space-x-3 overflow-hidden">
+                                <span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded-lg shrink-0">
+                                    #${i + 1}
+                                </span>
+                                <div class="truncate text-xs text-slate-200 font-medium">
+                                    <span class="text-white font-semibold">${escapeHtml(summaryLabel)}</span> 
+                                    <span class="text-slate-400 ml-2">(${qtyLabel})</span>
+                                    <span class="text-emerald-400/80 text-[10px] ml-2 italic">[Minimized / Active]</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 shrink-0">
+                                <button onclick="toggleCollapse(${i})" title="Expand / Edit" class="bg-slate-800 hover:bg-emerald-700 text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <span>Edit</span>
+                                </button>
+                                <button onclick="removeVehicleEntry(${i})" title="Delete" class="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg transition">
+                                    <i class="fa-solid fa-trash-can text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="vehicle-card bg-slate-900 border border-slate-700/80 rounded-2xl p-4 shadow-lg space-y-3 relative group" data-index="${i}">
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                <span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2.5 py-1 rounded-lg">
+                                    Vehicle #${i + 1}
+                                </span>
+                                <div class="flex items-center space-x-1">
+                                    <button onclick="toggleCollapse(${i})" title="Hide / Done (Minimize)" class="bg-slate-800 hover:bg-emerald-600 text-slate-300 hover:text-white px-2.5 py-1 rounded-lg text-xs font-semibold transition flex items-center space-x-1">
+                                        <i class="fa-solid fa-eye-slash"></i>
+                                        <span>Hide / Done</span>
+                                    </button>
+                                    <button onclick="removeVehicleEntry(${i})" title="Delete Vehicle" class="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg transition">
+                                        <i class="fa-solid fa-trash-can text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-medium text-slate-400 mb-1">DC Name (Auto-suggests past entries)</label>
+                                    <input type="text" list="savedDcNames" value="${escapeHtml(v.dcName)}" oninput="updateVehicleField(${i}, 'dcName', this.value)" class="input-dcName w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 uppercase">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-medium text-slate-400 mb-1">Vehicle No (Auto-suggests & validates duplicates)</label>
+                                    <input type="text" list="savedVehicleNos" value="${escapeHtml(v.vehicleNo)}" oninput="updateVehicleField(${i}, 'vehicleNo', this.value)" class="input-vehicleNo w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 uppercase font-mono">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="relative">
+                                    <label class="block text-[10px] font-medium text-slate-400 mb-1">Reporting Time (HH:MM)</label>
+                                    <input type="tel" inputmode="numeric" maxlength="5" placeholder="21:24" value="${escapeHtml(v.reportingTime)}" oninput="validateTimeInput(${i}, 'reportingTime', event)" class="input-reportingTime w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white text-center font-mono focus:outline-none focus:border-emerald-500">
+                                    <span class="time-error hidden text-[9px] text-rose-400 absolute -bottom-4 left-0">⚠️ Invalid (00-23:00-59)</span>
+                                </div>
+                                <div class="relative">
+                                    <label class="block text-[10px] font-medium text-slate-400 mb-1">Start Time (HH:MM)</label>
+                                    <input type="tel" inputmode="numeric" maxlength="5" placeholder="23:24" value="${escapeHtml(v.startTime)}" oninput="validateTimeInput(${i}, 'startTime', event)" class="input-startTime w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white text-center font-mono focus:outline-none focus:border-emerald-500">
+                                    <span class="time-error hidden text-[9px] text-rose-400 absolute -bottom-4 left-0">⚠️ Invalid (00-23:00-59)</span>
+                                </div>
+                                <div class="relative">
+                                    <label class="block text-[10px] font-medium text-slate-400 mb-1">End Time (HH:MM)</label>
+                                    <input type="tel" inputmode="numeric" maxlength="5" placeholder="01:58" value="${escapeHtml(v.endTime)}" oninput="validateTimeInput(${i}, 'endTime', event)" class="input-endTime w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white text-center font-mono focus:outline-none focus:border-emerald-500">
+                                    <span class="time-error hidden text-[9px] text-rose-400 absolute -bottom-4 left-0">⚠️ Invalid (00-23:00-59)</span>
+                                </div>
+                            </div>
+
+                            <!-- Mutually Exclusive Box / Ton Section -->
+                            <div class="grid grid-cols-2 gap-3 pt-4">
+                                <div>
+                                    <label class="block text-[10px] font-medium text-slate-400 mb-1">Box Quantity ${hasTon ? '<span class="text-amber-400">(Disabled by Ton)</span>' : ''}</label>
+                                    <input type="number" inputmode="numeric" placeholder="412" value="${escapeHtml(v.box)}" oninput="updateVehicleField(${i}, 'box', this.value)" ${hasTon ? 'disabled' : ''} class="input-box w-full ${hasTon ? 'bg-slate-950/50 border-slate-800 text-slate-600 cursor-not-allowed' : 'bg-slate-800 border-slate-700 text-white'} border rounded-xl px-2.5 py-2 text-xs text-center font-mono focus:outline-none focus:border-emerald-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-medium text-slate-400 mb-1">Ton Quantity ${hasBox ? '<span class="text-amber-400">(Disabled by Box)</span>' : ''}</label>
+                                    <input type="number" step="any" inputmode="decimal" placeholder="1.5" value="${escapeHtml(v.ton)}" oninput="updateVehicleField(${i}, 'ton', this.value)" ${hasBox ? 'disabled' : ''} class="input-ton w-full ${hasBox ? 'bg-slate-950/50 border-slate-800 text-slate-600 cursor-not-allowed' : 'bg-slate-800 border-slate-700 text-white'} border rounded-xl px-2.5 py-2 text-xs text-center font-mono focus:outline-none focus:border-emerald-500">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 pt-1">
+                                <div>
+                                    <label class="block text-[10px] font-medium text-slate-400 mb-1">Loader (Blank / Optional)</label>
+                                    <input type="number" inputmode="numeric" placeholder="" value="${escapeHtml(v.loader)}" oninput="updateVehicleField(${i}, 'loader', this.value)" class="input-loader w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white text-center font-mono focus:outline-none focus:border-emerald-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-medium text-slate-400 mb-1">Staff (Blank / Optional)</label>
+                                    <input type="number" inputmode="numeric" placeholder="" value="${escapeHtml(v.staff)}" oninput="updateVehicleField(${i}, 'staff', this.value)" class="input-staff w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white text-center font-mono focus:outline-none focus:border-emerald-500">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            container.innerHTML = html;
+        }
+
+        function addVehicleEntry() {
+            state.vehicles.push({
+                dcName: "",
+                vehicleNo: "",
+                reportingTime: "",
+                startTime: "",
+                endTime: "",
+                box: "",
+                ton: "",
+                loader: "",
+                staff: "",
+                collapsed: false
+            });
+            state.summaryTotal = state.vehicles.length;
+            persistState();
+            renderApp();
+        }
+
+        function removeVehicleEntry(index) {
+            state.vehicles.splice(index, 1);
+            state.summaryTotal = state.vehicles.length;
+            persistState();
+            renderApp();
+        }
+
+        function autoCalcVehicles() {
+            const count = state.vehicles.length;
+            state.summaryTotal = count;
+            document.getElementById('summaryTotal').value = count;
+            persistState();
+            showToast("Vehicle count synced!");
+        }
+
+        // Report 1: Detailed Vehicle Data
+        function generateReportText1() {
+            const hubName = document.getElementById('hubName').value || "Udhana";
+            const hubCode = document.getElementById('hubCode').value || "UDHANA 3939";
+            const reportDate = document.getElementById('reportDate').value || getFormattedToday();
+            const sumTotal = document.getElementById('summaryTotal').value || "0";
+            const sumUnloaded = document.getElementById('summaryUnloaded').value || "0";
+            const sumPending = document.getElementById('summaryPending').value || "0";
+            const sumMore = document.getElementById('summaryMoreThan24').value || "0";
+
+            let lines = [];
+            lines.push(`*Dc Data*`);
+            lines.push(`*${hubName}*`);
+            lines.push(`Date : ${reportDate}`);
+            lines.push(`*${hubCode}*`);
+            lines.push(`No of DC vehicle Today : ${sumTotal}`);
+            lines.push(`No of DC vehicle unloaded : ${sumUnloaded}`);
+            lines.push(`No of Pending vehicle today: ${sumPending}`);
+            lines.push(`No of pending vehicle more than 24hr : ${sumMore}`);
+            
+            let totalLoader = 0;
+            let totalStaff = 0;
+
+            state.vehicles.forEach((v, i) => {
+                lines.push(``);
+                lines.push(`*${i + 1})DC NAME* :${(v.dcName || "").toUpperCase()}`);
+                lines.push(`*VEHICLE NO* : ${(v.vehicleNo || "").toUpperCase()}`);
+                lines.push(`*REPORTING TIME* : ${v.reportingTime || ""}`);
+                lines.push(`*START TIME* : ${v.startTime || ""}`);
+                lines.push(`*END TIME* : ${v.endTime || ""}`);
+                
+                if (v.box !== undefined && v.box !== "") {
+                    lines.push(`*BOX* : ${v.box}`);
+                } else if (v.ton !== undefined && v.ton !== "") {
+                    lines.push(`*TON* : ${v.ton}`);
+                } else {
+                    lines.push(`*BOX* : 0`);
+                }
+
+                if (v.loader && !isNaN(v.loader)) {
+                    totalLoader += Number(v.loader);
+                }
+                if (v.staff && !isNaN(v.staff)) {
+                    totalStaff += Number(v.staff);
+                }
+            });
+
+            lines.push(``);
+            lines.push(`*TOTAL LODER* : ${totalLoader}`);
+            lines.push(`*TOTAL STAFF* : ${totalStaff}`);
+
+            return lines.join('\n');
+        }
+
+        // Report 2: TAT Summary
+        function generateReportText2() {
+            const hubCode = document.getElementById('hubCode').value || "Udhana 3939";
+            const reportDate = document.getElementById('reportDate').value || getFormattedToday();
+            // Convert DD/MM/YYYY to DD.MM.YYYY for Report 2
+            const formattedDotDate = reportDate.replace(/\//g, '.');
+
+            const totalVehiclesCount = state.vehicles.length;
+
+            // Calculate DC breakdown counts
+            const dcCounts = {};
+            state.vehicles.forEach(v => {
+                const name = (v.dcName && v.dcName.trim() !== "") ? v.dcName.trim().toUpperCase() : "UNKNOWN DC";
+                dcCounts[name] = (dcCounts[name] || 0) + 1;
+            });
+
+            // Calculate Check-In and Check-Out counts
+            const totalCheckIn = totalVehiclesCount;
+            let totalCheckOut = 0;
+            state.vehicles.forEach(v => {
+                if (v.endTime && v.endTime.trim() !== "") {
+                    totalCheckOut++;
+                }
+            });
+            const pendingCheckout = Math.max(0, totalCheckIn - totalCheckOut);
+
+            let lines = [];
+            lines.push(`*Day To Day Vehicle Data (TAT) Summary*`);
+            lines.push(`*Date:-* ${formattedDotDate}`);
+            lines.push(`*Store Name:* *${hubCode}*`);
+            lines.push(``);
+            lines.push(`*Total Dc Vehicle:* ${String(totalVehiclesCount).padStart(2, '0')}`);
+
+            for (let dc in dcCounts) {
+                lines.push(`*${dc}:* ${String(dcCounts[dc]).padStart(2, '0')}`);
+            }
+
+            lines.push(``);
+            lines.push(``);
+            lines.push(``);
+            lines.push(`*Total Vehicle Check In:* ${String(totalCheckIn).padStart(2, '0')}`);
+            lines.push(`*Total Vehicle Check Out:* ${String(totalCheckOut).padStart(2, '0')}`);
+            lines.push(`*Pending Checkout Vehicle Count & Reason for Pendency:* ${pendingCheckout}`);
+
+            return lines.join('\n');
+        }
+
+        function updatePreview() {
+            const previewBox1 = document.getElementById('whatsappPreviewBox1');
+            const previewBox2 = document.getElementById('whatsappPreviewBox2');
+            if (previewBox1) {
+                previewBox1.innerText = generateReportText1();
+            }
+            if (previewBox2) {
+                previewBox2.innerText = generateReportText2();
+            }
+        }
+
+        function copyReport(reportNum) {
+            const text = reportNum === 1 ? generateReportText1() : generateReportText2();
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast(`Report ${reportNum} copied to clipboard!`);
+                }).catch(() => {
+                    fallbackCopyText(text, reportNum);
+                });
+            } else {
+                fallbackCopyText(text, reportNum);
+            }
+        }
+
+        function fallbackCopyText(text, reportNum) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast(`Report ${reportNum} copied to clipboard!`);
+                } else {
+                    showToast("Failed to copy report.");
+                }
+            } catch (err) {
+                showToast("Unable to copy automatically.");
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function shareWhatsApp(reportNum) {
+            const text = reportNum === 1 ? generateReportText1() : generateReportText2();
+            const encoded = encodeURIComponent(text);
+            window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+        }
+
+        function openResetModal() {
+            document.getElementById('resetModal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('resetModal').classList.add('hidden');
+        }
+
+        function confirmResetForNewDay() {
+            closeResetModal();
+            const today = getFormattedToday();
+            state = {
+                hubName: "Udhana",
+                hubCode: "UDHANA 3939",
+                reportDate: today,
+                summaryTotal: "1",
+                summaryUnloaded: "0",
+                summaryPending: "0",
+                summaryMoreThan24: "0",
+                vehicles: [
+                    {
+                        dcName: "",
+                        vehicleNo: "",
+                        reportingTime: "",
+                        startTime: "",
+                        endTime: "",
+                        box: "",
+                        ton: "",
+                        loader: "",
+                        staff: "",
+                        collapsed: false
+                    }
+                ]
+            };
+            historyStore[today] = JSON.parse(JSON.stringify(state));
+            activeDateKey = today;
+            saveAllHistory();
+            renderApp();
+            showToast("Reset for new day!");
+        }
+
+        function showToast(msg, isWarning = false) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-msg');
+            const iconEl = document.getElementById('toast-icon');
+            
+            msgEl.innerText = msg;
+            if (isWarning) {
+                toast.className = "fixed bottom-6 right-6 z-50 transform translate-y-0 opacity-100 transition-all duration-300 bg-amber-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 text-sm font-medium";
+                iconEl.className = "fa-solid fa-triangle-exclamation text-lg";
+            } else {
+                toast.className = "fixed bottom-6 right-6 z-50 transform translate-y-0 opacity-100 transition-all duration-300 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 text-sm font-medium";
+                iconEl.className = "fa-solid fa-circle-check text-lg";
+            }
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>
+```
