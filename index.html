@@ -1,15 +1,14 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Udhana DC Report Generator</title>
+    <title>Udhana DC Report & TAT Generator</title>
     
     <!-- PWA Meta Tags & Manifest -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Udhana DC Report">
+    <meta name="apple-mobile-web-app-title" content="Udhana DC">
     <meta name="theme-color" content="#059669">
     <link rel="apple-touch-icon" href="https://placehold.co/192x192/059669/ffffff?text=UDC">
     <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Udhana%20DC%20Report%20Generator%22%2C%22short_name%22%3A%22Udhana%20DC%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f172a%22%2C%22theme_color%22%3A%22%23059669%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fplacehold.co%2F192x192%2F059669%2Fffffff%3Ftext%3DUDC%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
@@ -27,20 +26,29 @@
     <datalist id="savedDcNames"></datalist>
     <datalist id="savedVehicleNos"></datalist>
 
-    <!-- Header -->
+    <!-- Header with Professional Logo & Install PWA Button -->
     <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-md">
         <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="bg-emerald-600 text-white p-2.5 rounded-xl shadow-lg">
-                    <i class="fa-solid fa-truck-fast text-xl"></i>
+                <div class="bg-gradient-to-tr from-emerald-600 to-teal-500 text-white p-3 rounded-2xl shadow-xl flex items-center justify-center">
+                    <i class="fa-solid fa-warehouse text-lg"></i>
+                    <i class="fa-solid fa-truck-fast text-xs ml-1"></i>
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold tracking-tight text-white">Udhana DC Report</h1>
+                    <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        Udhana DC Report
+                        <span class="bg-emerald-950 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded-full border border-emerald-800/50">PWA Ready</span>
+                    </h1>
                     <p class="text-xs text-slate-400">Daily Vehicle Management & TAT Summary</p>
                 </div>
             </div>
             <div class="flex items-center space-x-2">
-                <button onclick="openResetModal()" title="Reset for New Day" class="bg-slate-700 hover:bg-rose-600 text-slate-300 hover:text-white px-3 py-2 rounded-lg text-xs font-medium transition duration-200 flex items-center space-x-1">
+                <!-- Install PWA Button (Hidden until install prompt is ready) -->
+                <button id="installAppBtn" onclick="installPWA()" title="Add to Home Screen" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-semibold transition shadow-lg flex items-center space-x-1.5 animate-pulse">
+                    <i class="fa-solid fa-download"></i>
+                    <span class="hidden sm:inline">Install App</span>
+                </button>
+                <button onclick="openResetModal()" title="Reset for New Day" class="bg-slate-700 hover:bg-rose-600 text-slate-300 hover:text-white px-3 py-2 rounded-xl text-xs font-medium transition duration-200 flex items-center space-x-1">
                     <i class="fa-solid fa-rotate-right"></i>
                     <span class="hidden sm:inline">Reset</span>
                 </button>
@@ -227,6 +235,40 @@
     </main>
 
     <script>
+        // PWA Service Worker Registration & Install Prompt Handler
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('installAppBtn');
+            if (installBtn) {
+                installBtn.classList.remove('hidden');
+            }
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        showToast("App installed successfully!");
+                    }
+                    deferredPrompt = null;
+                    document.getElementById('installAppBtn').classList.add('hidden');
+                });
+            } else {
+                showToast("App is already installed or ready from browser menu!");
+            }
+        }
+
+        // Register Service Worker for PWA compliance
+        if ('serviceWorker' in navigator) {
+            const swCode = `self.addEventListener('fetch', function(e) {});`;
+            const blob = new Blob([swCode], {type: 'application/javascript'});
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).catch(() => {});
+        }
+
         let historyStore = {};
         let activeDateKey = "";
 
@@ -568,7 +610,7 @@
                 const isCollapsed = !!v.collapsed;
 
                 if (isCollapsed) {
-                    const summaryLabel = (v.dcName || v.vehicleNo) ? `${v.dcName ? v.dcName.toUpperCase() : 'DC'} | ${v.vehicleNo ? v.vehicleNo.toUpperCase() : 'NO VEHICLE'}` : `Vehicle #${i + 1} (Empty)`;
+                    const summaryLabel = (v.dcName || v.vehicleNo) ? `${v.dcName ? v.dcName.toUpperCase() : 'DC'} \vert{} ${v.vehicleNo ? v.vehicleNo.toUpperCase() : 'NO VEHICLE'}` : `Vehicle #${i + 1} (Empty)`;
                     const qtyLabel = hasBox ? `Box: ${v.box}` : (hasTon ? `Ton: ${v.ton}` : `Qty: 0`);
                     
                     html += `
@@ -761,19 +803,16 @@
         function generateReportText2() {
             const hubCode = document.getElementById('hubCode').value || "Udhana 3939";
             const reportDate = document.getElementById('reportDate').value || getFormattedToday();
-            // Convert DD/MM/YYYY to DD.MM.YYYY for Report 2
             const formattedDotDate = reportDate.replace(/\//g, '.');
 
             const totalVehiclesCount = state.vehicles.length;
 
-            // Calculate DC breakdown counts
             const dcCounts = {};
             state.vehicles.forEach(v => {
                 const name = (v.dcName && v.dcName.trim() !== "") ? v.dcName.trim().toUpperCase() : "UNKNOWN DC";
                 dcCounts[name] = (dcCounts[name] || 0) + 1;
             });
 
-            // Calculate Check-In and Check-Out counts
             const totalCheckIn = totalVehiclesCount;
             let totalCheckOut = 0;
             state.vehicles.forEach(v => {
@@ -791,7 +830,7 @@
             lines.push(`*Total Dc Vehicle:* ${String(totalVehiclesCount).padStart(2, '0')}`);
 
             for (let dc in dcCounts) {
-                lines.push(`*${dc}:* ${String(dcCounts[dc]).padStart(2, '0')}`);
+                lines.push(`*${dc}:*${String(dcCounts[dc]).padStart(2, '0')}`);
             }
 
             lines.push(``);
@@ -922,4 +961,3 @@
     </script>
 </body>
 </html>
-```
