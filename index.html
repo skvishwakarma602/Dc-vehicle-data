@@ -823,13 +823,13 @@
 
             let lines = [];
             lines.push(`*Day To Day Vehicle Data (TAT) Summary*`);
-            lines.push(`*Date:-* ${formattedDotDate}`);
+            lines.push(`*Date:* ${formattedDotDate}`);
             lines.push(`*Store Name:* *${hubCode}*`);
             lines.push(``);
             lines.push(`*Total Dc Vehicle:* ${String(totalVehiclesCount).padStart(2, '0')}`);
 
             for (let dc in dcCounts) {
-                lines.push(`*${dc}:*${String(dcCounts[dc]).padStart(2, '0')}`);
+                lines.push(`*${dc}:* ${String(dcCounts[dc]).padStart(2, '0')}`);
             }
 
             lines.push(``);
