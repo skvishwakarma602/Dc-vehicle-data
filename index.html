@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Udhana DC">
     <meta name="theme-color" content="#0f172a">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192' width='192' height='192'%3E%3Crect width='192' height='192' rx='40' fill='%230284c7'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-size='85'%3E🚚%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192' width='192' height='192'%3E%3Crect width='192' height='192' rx='40' fill='%230284c7'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-size='85'%3E%3C/text%3E%3C/svg%3E">
     <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Udhana%20DC%20Report%20Generator%22%2C%22short_name%22%3A%22Udhana%20DC%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f172a%22%2C%22theme_color%22%3A%22%230284c7%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml,%253Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20192%20192%27%20width%3D%27192%27%20height%3D%27192%27%253E%253Crect%20width%3D%27192%27%20height%3D%27192%27%20rx%3D%2740%27%20fill%3D%27%25230284c7%27%2F%253E%253Ctext%20x%3D%2750%25%27%20y%3D%2755%25%27%20dominant-baseline%3D%27middle%27%20text-anchor%3D%27middle%27%20font-size%3D%2785%27%253E%25F0%259F%259A%259A%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -31,7 +31,7 @@
         <div class="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="bg-gradient-to-tr from-sky-600 to-emerald-500 text-white w-10 h-10 rounded-xl shadow-md flex items-center justify-center text-lg">
-                    🚚
+                    
                 </div>
                 <div>
                     <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
@@ -129,32 +129,29 @@
         <section class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-5 shadow-md space-y-4">
             <div class="flex items-center justify-between border-b border-slate-700/80 pb-3">
                 <h2 class="text-xs font-bold text-sky-400 uppercase tracking-wider">
-                    <i class="fa-solid fa-chart-pie mr-1.5"></i> Daily Summary Metrics
+                    <i class="fa-solid fa-chart-pie mr-1.5"></i> Daily Summary Metrics (Auto-Calculated)
                 </h2>
-                <span class="text-[11px] text-slate-400">Numeric Format</span>
+                <button onclick="autoCalculateMetrics()" type="button" class="bg-slate-700 hover:bg-sky-600 text-slate-200 hover:text-white px-2.5 py-1 rounded-lg text-xs font-medium transition flex items-center space-x-1">
+                    <i class="fa-solid fa-calculator mr-1"></i> Recalculate
+                </button>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1">No of DC vehicle Today (Numeric)</label>
-                    <div class="relative">
-                        <input type="number" id="summaryTotal" oninput="updateSummaryMetrics()" class="w-full bg-slate-950/70 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold">
-                        <button onclick="autoCalcVehicles()" type="button" title="Sync with vehicle list count" class="absolute right-2 top-2 bg-slate-700 hover:bg-sky-600 text-slate-200 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-medium transition">
-                            <i class="fa-solid fa-sync mr-1"></i> Sync
-                        </button>
-                    </div>
+                    <input type="number" id="summaryTotal" oninput="updateSummaryMetrics()" class="w-full bg-slate-950/70 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1">No of DC vehicle unloaded</label>
-                    <input type="text" id="summaryUnloaded" placeholder="e.g. 04 and 1 running" oninput="updateSummaryMetrics()" class="w-full bg-slate-950/70 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
+                    <input type="text" id="summaryUnloaded" oninput="updateSummaryMetrics()" class="w-full bg-slate-950/70 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1">No of Pending vehicle today (Numeric)</label>
-                    <input type="number" id="summaryPending" placeholder="01" oninput="updateSummaryMetrics()" class="w-full bg-slate-950/70 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
+                    <input type="number" id="summaryPending" oninput="updateSummaryMetrics()" class="w-full bg-slate-950/70 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1">No of pending vehicle > 24hr (Numeric)</label>
-                    <input type="number" id="summaryMoreThan24" placeholder="00" oninput="updateSummaryMetrics()" class="w-full bg-slate-950/70 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
+                    <input type="number" id="summaryMoreThan24" oninput="updateSummaryMetrics()" class="w-full bg-slate-950/70 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
                 </div>
             </div>
         </section>
@@ -274,7 +271,7 @@
             hubName: "Udhana",
             hubCode: "UDHANA 3939",
             reportDate: "",
-            summaryTotal: "01",
+            summaryTotal: "0",
             summaryUnloaded: "0",
             summaryPending: "0",
             summaryMoreThan24: "0",
@@ -378,6 +375,53 @@
             persistState();
         }
 
+        // Automatic Calculation Logic for Summary Metrics
+        function autoCalculateMetrics() {
+            const totalVehicles = state.vehicles.length;
+            
+            let unloadedCount = 0;
+            let pendingCount = 0;
+
+            state.vehicles.forEach(v => {
+                if (v.endTime && v.endTime.trim() !== "") {
+                    unloadedCount++;
+                } else {
+                    pendingCount++;
+                }
+            });
+
+            // Calculate > 24hr pending vehicles from previous days or based on report date logic
+            let moreThan24Count = 0;
+            const currentDateObj = parseDateKey(activeDateKey);
+            const todayObj = new Date();
+            todayObj.setHours(0,0,0,0);
+            currentDateObj.setHours(0,0,0,0);
+
+            // If active date is older than today, or if vehicles lack checkout from past dates
+            state.vehicles.forEach(v => {
+                if ((!v.endTime || v.endTime.trim() === "")) {
+                    // Check if reported earlier than current active date or if active date is in the past
+                    if (currentDateObj < todayObj) {
+                        moreThan24Count++;
+                    }
+                }
+            });
+
+            state.summaryTotal = String(totalVehicles);
+            state.summaryUnloaded = String(unloadedCount);
+            state.summaryPending = String(pendingCount);
+            state.summaryMoreThan24 = String(moreThan24Count);
+
+            // Update UI fields
+            document.getElementById('summaryTotal').value = state.summaryTotal;
+            document.getElementById('summaryUnloaded').value = state.summaryUnloaded;
+            document.getElementById('summaryPending').value = state.summaryPending;
+            document.getElementById('summaryMoreThan24').value = state.summaryMoreThan24;
+
+            persistState();
+            showToast("Summary metrics auto-calculated!");
+        }
+
         function persistState() {
             activeDateKey = state.reportDate || activeDateKey;
             historyStore[activeDateKey] = JSON.parse(JSON.stringify(state));
@@ -393,7 +437,7 @@
                 if (cleanVal !== "") {
                     for (let i = 0; i < state.vehicles.length; i++) {
                         if (i !== index && state.vehicles[i].vehicleNo && state.vehicles[i].vehicleNo.trim().toUpperCase() === cleanVal) {
-                            showToast(`⚠️ Vehicle number "${cleanVal}" already exists in this date's report!`, true);
+                            showToast(` Vehicle number "${cleanVal}" already exists in this date's report!`, true);
                             break;
                         }
                     }
@@ -426,7 +470,8 @@
                 if (boxInput) boxInput.disabled = false;
             }
 
-            persistState();
+            // Auto-trigger metrics recalculation on every field update (especially endTime)
+            autoCalculateMetrics();
         }
 
         function toggleCollapse(index) {
@@ -477,6 +522,7 @@
             }
             activeDateKey = dateKey;
             renderApp();
+            autoCalculateMetrics();
         }
 
         function onReportDateChange() {
@@ -567,10 +613,6 @@
             document.getElementById('hubCode').value = state.hubCode || "UDHANA 3939";
             document.getElementById('reportDate').value = state.reportDate || activeDateKey;
             document.getElementById('activeDateDisplay').innerText = state.reportDate || activeDateKey;
-            document.getElementById('summaryTotal').value = state.summaryTotal || "0";
-            document.getElementById('summaryUnloaded').value = state.summaryUnloaded || "";
-            document.getElementById('summaryPending').value = state.summaryPending || "";
-            document.getElementById('summaryMoreThan24').value = state.summaryMoreThan24 || "";
 
             const todayStr = getFormattedToday();
             const nextBtn = document.getElementById('nextDateBtn');
@@ -582,6 +624,7 @@
 
             updateAutocompleteSuggestions();
             renderVehicleList();
+            autoCalculateMetrics();
             updatePreview();
         }
 
@@ -665,17 +708,17 @@
                                 <div class="relative">
                                     <label class="block text-[10px] font-semibold text-slate-300 mb-1">Reporting Time (HH:MM)</label>
                                     <input type="tel" inputmode="numeric" maxlength="5" placeholder="21:24" value="${escapeHtml(v.reportingTime)}" oninput="validateTimeInput(${i}, 'reportingTime', event)" class="input-reportingTime w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
-                                    <span class="time-error hidden text-[9px] text-rose-400 font-semibold absolute -bottom-4 left-0">⚠️ Invalid (00-23:00-59)</span>
+                                    <span class="time-error hidden text-[9px] text-rose-400 font-semibold absolute -bottom-4 left-0"> Invalid (00-23:00-59)</span>
                                 </div>
                                 <div class="relative">
                                     <label class="block text-[10px] font-semibold text-slate-300 mb-1">Start Time (HH:MM)</label>
                                     <input type="tel" inputmode="numeric" maxlength="5" placeholder="23:24" value="${escapeHtml(v.startTime)}" oninput="validateTimeInput(${i}, 'startTime', event)" class="input-startTime w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
-                                    <span class="time-error hidden text-[9px] text-rose-400 font-semibold absolute -bottom-4 left-0">⚠️ Invalid (00-23:00-59)</span>
+                                    <span class="time-error hidden text-[9px] text-rose-400 font-semibold absolute -bottom-4 left-0"> Invalid (00-23:00-59)</span>
                                 </div>
                                 <div class="relative">
                                     <label class="block text-[10px] font-semibold text-slate-300 mb-1">End Time (HH:MM)</label>
                                     <input type="tel" inputmode="numeric" maxlength="5" placeholder="01:58" value="${escapeHtml(v.endTime)}" oninput="validateTimeInput(${i}, 'endTime', event)" class="input-endTime w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
-                                    <span class="time-error hidden text-[9px] text-rose-400 font-semibold absolute -bottom-4 left-0">⚠️ Invalid (00-23:00-59)</span>
+                                    <span class="time-error hidden text-[9px] text-rose-400 font-semibold absolute -bottom-4 left-0"> Invalid (00-23:00-59)</span>
                                 </div>
                             </div>
 
@@ -721,24 +764,14 @@
                 staff: "",
                 collapsed: false
             });
-            state.summaryTotal = state.vehicles.length;
             persistState();
             renderApp();
         }
 
         function removeVehicleEntry(index) {
             state.vehicles.splice(index, 1);
-            state.summaryTotal = state.vehicles.length;
             persistState();
             renderApp();
-        }
-
-        function autoCalcVehicles() {
-            const count = state.vehicles.length;
-            state.summaryTotal = count;
-            document.getElementById('summaryTotal').value = count;
-            persistState();
-            showToast("Vehicle count synced!");
         }
 
         function generateReportText1() {
@@ -824,7 +857,7 @@
             lines.push(`*Total Dc Vehicle:* ${String(totalVehiclesCount).padStart(2, '0')}`);
 
             for (let dc in dcCounts) {
-                lines.push(`*${dc}:*${String(dcCounts[dc]).padStart(2, '0')}`);
+                lines.push(`*${dc}:* ${String(dcCounts[dc]).padStart(2, '0')}`);
             }
 
             lines.push(``);
@@ -904,7 +937,7 @@
                 reportDate: today,
                 summaryTotal: "1",
                 summaryUnloaded: "0",
-                summaryPending: "0",
+                summaryPending: "1",
                 summaryMoreThan24: "0",
                 vehicles: [
                     {
