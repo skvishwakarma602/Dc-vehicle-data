@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Udhana DC">
     <meta name="theme-color" content="#0f172a">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192' width='192' height='192'%3E%3Crect width='192' height='192' rx='40' fill='%230284c7'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-size='85'%3E%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192' width='192' height='192'%3E%3Crect width='192' height='192' rx='40' fill='%230284c7'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-size='85'%3E🚚%3C/text%3E%3C/svg%3E">
     <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Udhana%20DC%20Report%20Generator%22%2C%22short_name%22%3A%22Udhana%20DC%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f172a%22%2C%22theme_color%22%3A%22%230284c7%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml,%253Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20192%20192%27%20width%3D%27192%27%20height%3D%27192%27%253E%253Crect%20width%3D%27192%27%20height%3D%27192%27%20rx%3D%2740%27%20fill%3D%27%25230284c7%27%2F%253E%253Ctext%20x%3D%2750%25%27%20y%3D%2755%25%27%20dominant-baseline%3D%27middle%27%20text-anchor%3D%27middle%27%20font-size%3D%2785%27%253E%25F0%259F%259A%259A%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -26,12 +26,18 @@
     <datalist id="savedDcNames"></datalist>
     <datalist id="savedVehicleNos"></datalist>
 
+    <!-- Toast Notification (Moved to Top Center for Better User Experience) -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 -translate-y-20 opacity-0 transition-all duration-300 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-2 text-sm font-medium">
+        <i class="fa-solid fa-circle-check text-lg" id="toast-icon"></i>
+        <span id="toast-msg">Action completed!</span>
+    </div>
+
     <!-- Header -->
     <header class="bg-slate-800/90 border-b border-slate-700/80 sticky top-0 z-30 backdrop-blur-md shadow-lg">
         <div class="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="bg-gradient-to-tr from-sky-600 to-emerald-500 text-white w-10 h-10 rounded-xl shadow-md flex items-center justify-center text-lg">
-                    
+                    🚚
                 </div>
                 <div>
                     <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
@@ -56,12 +62,6 @@
     </header>
 
     <main class="max-w-3xl mx-auto px-4 py-6 space-y-5">
-
-        <!-- Toast Notification -->
-        <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 text-sm font-medium">
-            <i class="fa-solid fa-circle-check text-lg" id="toast-icon"></i>
-            <span id="toast-msg">Action completed!</span>
-        </div>
 
         <!-- Reset Modal -->
         <div id="resetModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
@@ -390,17 +390,14 @@
                 }
             });
 
-            // Calculate > 24hr pending vehicles from previous days or based on report date logic
             let moreThan24Count = 0;
             const currentDateObj = parseDateKey(activeDateKey);
             const todayObj = new Date();
             todayObj.setHours(0,0,0,0);
             currentDateObj.setHours(0,0,0,0);
 
-            // If active date is older than today, or if vehicles lack checkout from past dates
             state.vehicles.forEach(v => {
                 if ((!v.endTime || v.endTime.trim() === "")) {
-                    // Check if reported earlier than current active date or if active date is in the past
                     if (currentDateObj < todayObj) {
                         moreThan24Count++;
                     }
@@ -412,14 +409,12 @@
             state.summaryPending = String(pendingCount);
             state.summaryMoreThan24 = String(moreThan24Count);
 
-            // Update UI fields
             document.getElementById('summaryTotal').value = state.summaryTotal;
             document.getElementById('summaryUnloaded').value = state.summaryUnloaded;
             document.getElementById('summaryPending').value = state.summaryPending;
             document.getElementById('summaryMoreThan24').value = state.summaryMoreThan24;
 
             persistState();
-            showToast("Summary metrics auto-calculated!");
         }
 
         function persistState() {
@@ -437,7 +432,7 @@
                 if (cleanVal !== "") {
                     for (let i = 0; i < state.vehicles.length; i++) {
                         if (i !== index && state.vehicles[i].vehicleNo && state.vehicles[i].vehicleNo.trim().toUpperCase() === cleanVal) {
-                            showToast(` Vehicle number "${cleanVal}" already exists in this date's report!`, true);
+                            showToast(`⚠️ Vehicle number "${cleanVal}" already exists in this date's report!`, true);
                             break;
                         }
                     }
@@ -470,7 +465,6 @@
                 if (boxInput) boxInput.disabled = false;
             }
 
-            // Auto-trigger metrics recalculation on every field update (especially endTime)
             autoCalculateMetrics();
         }
 
@@ -708,17 +702,17 @@
                                 <div class="relative">
                                     <label class="block text-[10px] font-semibold text-slate-300 mb-1">Reporting Time (HH:MM)</label>
                                     <input type="tel" inputmode="numeric" maxlength="5" placeholder="21:24" value="${escapeHtml(v.reportingTime)}" oninput="validateTimeInput(${i}, 'reportingTime', event)" class="input-reportingTime w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
-                                    <span class="time-error hidden text-[9px] text-rose-400 font-semibold absolute -bottom-4 left-0"> Invalid (00-23:00-59)</span>
+                                    <span class="time-error hidden text-[9px] text-rose-400 font-semibold absolute -bottom-4 left-0">⚠️ Invalid (00-23:00-59)</span>
                                 </div>
                                 <div class="relative">
                                     <label class="block text-[10px] font-semibold text-slate-300 mb-1">Start Time (HH:MM)</label>
                                     <input type="tel" inputmode="numeric" maxlength="5" placeholder="23:24" value="${escapeHtml(v.startTime)}" oninput="validateTimeInput(${i}, 'startTime', event)" class="input-startTime w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
-                                    <span class="time-error hidden text-[9px] text-rose-400 font-semibold absolute -bottom-4 left-0"> Invalid (00-23:00-59)</span>
+                                    <span class="time-error hidden text-[9px] text-rose-400 font-semibold absolute -bottom-4 left-0">⚠️ Invalid (00-23:00-59)</span>
                                 </div>
                                 <div class="relative">
                                     <label class="block text-[10px] font-semibold text-slate-300 mb-1">End Time (HH:MM)</label>
                                     <input type="tel" inputmode="numeric" maxlength="5" placeholder="01:58" value="${escapeHtml(v.endTime)}" oninput="validateTimeInput(${i}, 'endTime', event)" class="input-endTime w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
-                                    <span class="time-error hidden text-[9px] text-rose-400 font-semibold absolute -bottom-4 left-0"> Invalid (00-23:00-59)</span>
+                                    <span class="time-error hidden text-[9px] text-rose-400 font-semibold absolute -bottom-4 left-0">⚠️ Invalid (00-23:00-59)</span>
                                 </div>
                             </div>
 
@@ -857,7 +851,7 @@
             lines.push(`*Total Dc Vehicle:* ${String(totalVehiclesCount).padStart(2, '0')}`);
 
             for (let dc in dcCounts) {
-                lines.push(`*${dc}:* ${String(dcCounts[dc]).padStart(2, '0')}`);
+                lines.push(`*${dc}:*${String(dcCounts[dc]).padStart(2, '0')}`);
             }
 
             lines.push(``);
@@ -968,16 +962,16 @@
             
             msgEl.innerText = msg;
             if (isWarning) {
-                toast.className = "fixed bottom-6 right-6 z-50 transform translate-y-0 opacity-100 transition-all duration-300 bg-amber-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 text-sm font-medium";
+                toast.className = "fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 bg-amber-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-2 text-sm font-medium translate-y-0 opacity-100";
                 iconEl.className = "fa-solid fa-triangle-exclamation text-lg";
             } else {
-                toast.className = "fixed bottom-6 right-6 z-50 transform translate-y-0 opacity-100 transition-all duration-300 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 text-sm font-medium";
+                toast.className = "fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-2 text-sm font-medium translate-y-0 opacity-100";
                 iconEl.className = "fa-solid fa-circle-check text-lg";
             }
 
             setTimeout(() => {
                 toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.add('-translate-y-20', 'opacity-0');
             }, 3500);
         }
 
