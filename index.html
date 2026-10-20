@@ -851,7 +851,8 @@
             lines.push(`*Total Dc Vehicle:* ${String(totalVehiclesCount).padStart(2, '0')}`);
 
             for (let dc in dcCounts) {
-                lines.push(`*${dc}:*${String(dcCounts[dc]).padStart(2, '0')}`);
+                lines.push(`*${dc}:* $
+{String(dcCounts[dc]).padStart(2, '0')}`);
             }
 
             lines.push(``);
